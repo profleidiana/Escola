@@ -43,30 +43,17 @@
     <div id="tela-selecao" class="hidden flex flex-col items-center justify-center min-h-screen p-4">
         <div class="bg-white p-8 rounded-xl shadow-md w-full max-w-md border border-gray-200">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-blue-900">Configuração</h2>
+                <h2 class="text-2xl font-bold text-blue-900">Seleção de Turma</h2>
                 <button onclick="efetuarLogout()" class="text-xs font-semibold text-red-600 hover:text-red-800 transition">
                     <i class="fa-solid fa-power-off"></i> Sair
                 </button>
             </div>
             
-            <!-- ETAPA DE ENSINO -->
-            <div class="mb-4">
-                <label class="block text-sm font-semibold mb-2">1º Passo: Escolha a Etapa de Ensino</label>
-                <select id="select-etapa" onchange="filtrarTurmasPorEtapa()" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
-                    <option value="">-- Selecione a Etapa --</option>
-                    <option value="1 REG">1º Ano Regular (1 REG)</option>
-                    <option value="1 ADM">1º Ano Administração (TEC ADM)</option>
-                    <option value="2 REG">2º Ano Regular (2 REG)</option>
-                    <option value="3 REG">3º Ano Regular (3 REG)</option>
-                    <option value="EJA">EJA (3º EJA)</option>
-                </select>
-            </div>
-
             <!-- TURMA -->
             <div class="mb-6">
-                <label class="block text-sm font-semibold mb-2">2º Passo: Escolha a Turma</label>
-                <select id="select-turmas" disabled class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium cursor-not-allowed">
-                    <option value="">Selecione uma etapa primeiro...</option>
+                <label class="block text-sm font-semibold mb-2">Escolha a Turma Cadastrada:</label>
+                <select id="select-turmas" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
+                    <option value="">Carregando turmas...</option>
                 </select>
             </div>
 
@@ -157,11 +144,11 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-semibold mb-1">Nome do Aluno</label>
-                    <input type="text" id="edit-nome" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    <input type="text" id="edit-nome" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none uppercase">
                 </div>
                 <div>
                     <label class="block text-sm font-semibold mb-1">Nome da Turma</label>
-                    <input type="text" id="edit-turma" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    <input type="text" id="edit-turma" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none uppercase">
                 </div>
             </div>
             <div class="flex justify-end gap-3 mt-6">
@@ -173,13 +160,13 @@
 
     <!-- ================= CONEXÃO E LÓGICA DO SUPABASE ================= -->
     <script>
-        // DIGITE SUAS CREDENCIAIS DO SUPABASE AQUI:
-        const SUPABASE_URL = "https://SEU-PROJETO.supabase.co";
-        const SUPABASE_ANON_KEY = "SUA-CHAVE-ANONIMA-AQUI";
+        // INSIRA AQUI AS CHAVES DO SEU SUPABASE:
+        const SUPABASE_URL = "https://mrayvbmvmcgebecwwqzl.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1yYXl2Ym12bWNnZWJlY3d3cXpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0NzQ0NzcsImV4cCI6MjEwMjA1MDQ3N30.la3q5auixAkAsHzu5xdzZ77FAgqoeenDFsyRis05IG0";
          
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        let todasAsTurmas = []; // Armazenará todas as turmas únicas do banco
+        let todasAsTurmas = [];
         let alunoSelecionadoParaUpload = null;
         let turmaAtualSelecionada = "";
 
@@ -232,69 +219,27 @@
             }
         }
 
-        // Busca as turmas únicas diretamente da tabela 'carometro' do Supabase
+        // Carrega todas as turmas cadastradas no banco e insere no select
         async function carregarTurmas() {
+            const selectTurmas = document.getElementById("select-turmas");
+            selectTurmas.innerHTML = '<option value="">Carregando turmas...</option>';
+            selectTurmas.disabled = true;
+
             const { data, error } = await supabaseClient.from('carometro').select('class_name');
             if (error) return alert("Erro ao carregar turmas do servidor: " + error.message);
             
+            // Pega apenas nomes únicos de turmas
             todasAsTurmas = [...new Set(data.map(item => item.class_name))].filter(Boolean).sort();
             
-            document.getElementById("select-etapa").value = "";
-            const selectTurmas = document.getElementById("select-turmas");
-            selectTurmas.innerHTML = '<option value="">Selecione uma etapa primeiro...</option>';
-            selectTurmas.disabled = true;
-            selectTurmas.classList.add("bg-gray-50", "cursor-not-allowed");
-        }
-
-        // Filtra a lista de turmas com base na etapa de ensino escolhida
-        function filtrarTurmasPorEtapa() {
-            const etapaSelecionada = document.getElementById("select-etapa").value;
-            const selectTurmas = document.getElementById("select-turmas");
-
-            if (!etapaSelecionada) {
-                selectTurmas.innerHTML = '<option value="">Selecione uma etapa primeiro...</option>';
-                selectTurmas.disabled = true;
-                selectTurmas.classList.add("bg-gray-50", "cursor-not-allowed");
-                return;
-            }
-
-            let turmasFiltradas = [];
-
-            if (etapaSelecionada === "1 REG") {
-                turmasFiltradas = todasAsTurmas.filter(nomeTurma => 
-                    nomeTurma.toUpperCase().startsWith("1 REG")
-                );
-            } else if (etapaSelecionada === "1 ADM") {
-                turmasFiltradas = todasAsTurmas.filter(nomeTurma => {
-                    const nomeUpper = nomeTurma.toUpperCase();
-                    return nomeUpper.includes("ADM");
-                });
-            } else if (etapaSelecionada === "2 REG") {
-                turmasFiltradas = todasAsTurmas.filter(nomeTurma => 
-                    nomeTurma.toUpperCase().startsWith("2 REG")
-                );
-            } else if (etapaSelecionada === "3 REG") {
-                turmasFiltradas = todasAsTurmas.filter(nomeTurma => 
-                    nomeTurma.toUpperCase().startsWith("3 REG")
-                );
-            } else if (etapaSelecionada === "EJA") {
-                turmasFiltradas = todasAsTurmas.filter(nomeTurma => 
-                    nomeTurma.toUpperCase().includes("EJA")
-                );
-            }
-
-            selectTurmas.innerHTML = '<option value="">-- Escolha uma Turma --</option>';
-            
-            if (turmasFiltradas.length === 0) {
-                selectTurmas.innerHTML = '<option value="">Nenhuma turma encontrada nesta etapa</option>';
+            if (todasAsTurmas.length === 0) {
+                selectTurmas.innerHTML = '<option value="">Nenhuma turma cadastrada no banco</option>';
             } else {
-                turmasFiltradas.forEach(turma => {
+                selectTurmas.innerHTML = '<option value="">-- Selecione uma Turma --</option>';
+                todasAsTurmas.forEach(turma => {
                     selectTurmas.innerHTML += `<option value="${turma}">${turma}</option>`;
                 });
+                selectTurmas.disabled = false;
             }
-
-            selectTurmas.disabled = false;
-            selectTurmas.classList.remove("bg-gray-50", "cursor-not-allowed");
         }
 
         // Avançar para a tela do Carômetro
@@ -519,7 +464,7 @@
         async function salvarEdicaoAluno() {
             const id = document.getElementById("edit-aluno-id").value;
             const novoNome = document.getElementById("edit-nome").value.trim().toUpperCase();
-            const novaTurma = document.getElementById("edit-turma").value.trim();
+            const novaTurma = document.getElementById("edit-turma").value.trim().toUpperCase();
 
             if (!novoNome || !novaTurma) {
                 return alert("Nome e Turma não podem ficar vazios!");
