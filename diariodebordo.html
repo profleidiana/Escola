@@ -411,6 +411,10 @@
 
             document.getElementById("ocorr-descricao").value = "";
             document.getElementById("ocorr-autor").value = "";
+                        const campo = document.getElementById("id-do-campo");
+            if (campo) {
+                campo.value = valorDesejado;
+            }
             document.getElementById("ocorr-foto").value = "";
 
             esconderLoading();
