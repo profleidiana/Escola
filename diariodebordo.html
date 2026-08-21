@@ -60,10 +60,25 @@
                         <i class="fa-solid fa-plus text-xs"></i>
                         <span>Nova Ocorrência</span>
                     </button>
-                    <button onclick="voltarParaCarometro()" class="bg-white/10 hover:bg-white/15 px-3.5 py-2.5 rounded-xl font-semibold text-xs flex items-center gap-2">
-                        <i class="fa-solid fa-arrow-left"></i>
-                        <span>Voltar ao Carômetro</span>
+                    <!-- Botão Voltar -->
+                    <button onclick="voltarParaCarometro()" class="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-left"></i> Voltar
                     </button>
+                    
+                    <script>
+                    function voltarParaCarometro() {
+                        const params = new URLSearchParams(window.location.search);
+                        const turma = params.get('turma');
+                        
+                        if (turma) {
+                            // Redireciona de volta para o Carômetro enviando a mesma turma na URL
+                            window.location.href = `index.html?turma=${encodeURIComponent(turma)}`;
+                        } else {
+                            // Caso não tenha o parâmetro, apenas volta no histórico do navegador
+                            window.history.back();
+                        }
+                    }
+                    </script>
                 </div>
             </div>
         </header>
@@ -204,22 +219,28 @@
 
         let turmaAtualSelecionada = "";
 
-        document.addEventListener("DOMContentLoaded", () => {
-            popularTiposOcorrencia();
-
-            // Captura o parâmetro "turma" enviado via URL ex: diariodebordo.html?turma=1%20EM%20A
-            const params = new URLSearchParams(window.location.search);
-            const turmaParam = params.get('turma');
-
-            if (turmaParam) {
-                turmaAtualSelecionada = turmaParam;
-                document.getElementById("titulo-turma").innerText = `Diário de Bordo · ${turmaParam}`;
-                carregarOcorrencias(turmaParam);
-            } else {
-                alert("Nenhuma turma especificada! Redirecionando...");
-                voltarParaCarometro();
-            }
-        });
+        document.addEventListener("DOMContentLoaded", async () => {
+                verificarSessao();
+                configurarInputsDeArquivo();
+            
+                // CHECA SE VOLTOU COM O PARÂMETRO DA TURMA NA URL
+                const params = new URLSearchParams(window.location.search);
+                const turmaUrl = params.get('turma');
+            
+                if (turmaUrl && localStorage.getItem(CHAVE_EXPIRACAO)) {
+                    turmaAtualSelecionada = turmaUrl;
+                    document.getElementById("titulo-turma").innerText = `Carômetro · ${turmaUrl}`;
+            
+                    const btnDiario = document.getElementById("btn-diario-bordo");
+                    if (btnDiario) {
+                        btnDiario.href = `diariodebordo.html?turma=${encodeURIComponent(turmaUrl)}`;
+                    }
+            
+                    document.getElementById("tela-selecao").classList.add("hidden");
+                    document.getElementById("tela-carometro").classList.remove("hidden");
+                    carregarAlunos(turmaUrl);
+                }
+            });
 
         function popularTiposOcorrencia() {
             const selectTipo = document.getElementById("ocorr-tipo");
