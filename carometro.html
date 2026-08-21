@@ -197,6 +197,10 @@
                             <i class="fa-solid fa-power-off"></i>
                             <span>Sair</span>
                         </button>
+                        <!-- ÍCONE REDONDO DO DIÁRIO DE BORDO -->
+                        <a id="btn-diario-bordo" href="#" class="w-10 h-10 rounded-full bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white flex items-center justify-center transition shadow-sm" title="Diário de Bordo">
+                            <i class="fa-solid fa-book-bookmark text-sm"></i>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -348,8 +352,18 @@
    
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        let todasAsTurmas = [];
-        let turmasPorEtapa = {};
+        // Mapeamento fixo das etapas no Front-End
+        const ETAPAS = [
+            { label: "1º Ano - Ensino Médio", pattern: "%1 EM%" },
+            { label: "2º Ano - Ensino Médio", pattern: "%2 EM%" },
+            { label: "3º Ano - Ensino Médio", pattern: "%3 EM%" },
+            { label: "6º Ano - Ensino Fundamental", pattern: "%6 EF%" },
+            { label: "7º Ano - Ensino Fundamental", pattern: "%7 EF%" },
+            { label: "8º Ano - Ensino Fundamental", pattern: "%8 EF%" },
+            { label: "9º Ano - Ensino Fundamental", pattern: "%9 EF%" },
+            { label: "EJA", pattern: "%EJA%" }
+        ];
+
         let alunoSelecionadoParaUpload = null;
         let turmaAtualSelecionada = "";
 
@@ -383,7 +397,7 @@
                 document.getElementById("tela-login").classList.add("hidden");
                 document.getElementById("tela-selecao").classList.remove("hidden");
                 document.getElementById("tela-carometro").classList.add("hidden");
-                carregarTurmas();
+                carregarEtapas();
             } else {
                 localStorage.removeItem(CHAVE_EXPIRACAO);
                 document.getElementById("tela-login").classList.remove("hidden");
@@ -415,76 +429,53 @@
         }
 
         /* ================= ESTRUTURA DE ETAPAS E TURMAS ================= */
-        function identificarEtapa(nomeTurma) {
-            if (!nomeTurma) return "Outras Turmas";
-            const t = nomeTurma.toUpperCase();
-
-            if (t.includes("1º EM") || t.includes("1 EM") || t.includes("1ºEM")) return "1º Ano - Ensino Médio";
-            if (t.includes("2º EM") || t.includes("2 EM") || t.includes("2ºEM")) return "2º Ano - Ensino Médio";
-            if (t.includes("3º EM") || t.includes("3 EM") || t.includes("3ºEM")) return "3º Ano - Ensino Médio";
-            if (t.includes("6º EF") || t.includes("6 EF") || t.includes("6ºEF")) return "6º Ano - Ensino Fundamental";
-            if (t.includes("7º EF") || t.includes("7 EF") || t.includes("7ºEF")) return "7º Ano - Ensino Fundamental";
-            if (t.includes("8º EF") || t.includes("8 EF") || t.includes("8ºEF")) return "8º Ano - Ensino Fundamental";
-            if (t.includes("9º EF") || t.includes("9 EF") || t.includes("9ºEF")) return "9º Ano - Ensino Fundamental";
-            if (t.includes("EM") || t.includes("MÉDIO")) return "Ensino Médio";
-            if (t.includes("EF") || t.includes("FUNDAMENTAL")) return "Ensino Fundamental";
-            if (t.includes("EJA")) return "EJA";
-
-            return "Outras Turmas";
-        }
-
-        async function carregarTurmas() {
+        function carregarEtapas() {
             const selectEtapa = document.getElementById("select-etapa");
             const selectTurmas = document.getElementById("select-turmas");
 
-            selectEtapa.innerHTML = '<option value="">Carregando etapas...</option>';
-            selectEtapa.disabled = true;
+            selectEtapa.innerHTML = '<option value="">-- Selecione uma Etapa --</option>';
             selectTurmas.innerHTML = '<option value="">-- Selecione primeiro a Etapa --</option>';
             selectTurmas.disabled = true;
 
-            const { data, error } = await supabaseClient
-                .from('carometro')
-                .select('class_name')
-                .limit(5000);
-            if (error) return alert("Erro ao carregar turmas: " + error.message);
-
-            todasAsTurmas = [...new Set(data.map(item => item.class_name))].filter(Boolean).sort();
-
-            if (todasAsTurmas.length === 0) {
-                selectEtapa.innerHTML = '<option value="">Nenhuma turma cadastrada no banco</option>';
-                return;
-            }
-
-            // Agrupa turmas pela etapa correspondente
-            turmasPorEtapa = {};
-            todasAsTurmas.forEach(turma => {
-                const etapa = identificarEtapa(turma);
-                if (!turmasPorEtapa[etapa]) turmasPorEtapa[etapa] = [];
-                turmasPorEtapa[etapa].push(turma);
-            });
-
-            const etapas = Object.keys(turmasPorEtapa).sort();
-
-            selectEtapa.innerHTML = '<option value="">-- Selecione uma Etapa --</option>';
-            etapas.forEach(etapa => {
-                selectEtapa.innerHTML += `<option value="${etapa}">${etapa} (${turmasPorEtapa[etapa].length})</option>`;
+            ETAPAS.forEach((etapa, index) => {
+                selectEtapa.innerHTML += `<option value="${index}">${etapa.label}</option>`;
             });
             selectEtapa.disabled = false;
         }
 
-        function filtrarTurmasPorEtapa() {
-            const etapaSelecionada = document.getElementById("select-etapa").value;
+        async function filtrarTurmasPorEtapa() {
+            const indexEtapa = document.getElementById("select-etapa").value;
             const selectTurmas = document.getElementById("select-turmas");
 
-            if (!etapaSelecionada || !turmasPorEtapa[etapaSelecionada]) {
+            if (indexEtapa === "") {
                 selectTurmas.innerHTML = '<option value="">-- Selecione primeiro a Etapa --</option>';
                 selectTurmas.disabled = true;
                 return;
             }
 
-            const turmas = turmasPorEtapa[etapaSelecionada];
+            const etapa = ETAPAS[indexEtapa];
+            selectTurmas.innerHTML = '<option value="">Buscando turmas...</option>';
+            selectTurmas.disabled = true;
+
+            const { data, error } = await supabaseClient
+                .from('carometro')
+                .select('class_name')
+                .ilike('class_name', etapa.pattern);
+
+            if (error) {
+                alert("Erro ao carregar turmas: " + error.message);
+                return;
+            }
+
+            const turmasUnicas = [...new Set(data.map(item => item.class_name))].filter(Boolean).sort();
+
+            if (turmasUnicas.length === 0) {
+                selectTurmas.innerHTML = '<option value="">Nenhuma turma encontrada nesta etapa</option>';
+                return;
+            }
+
             selectTurmas.innerHTML = '<option value="">-- Selecione uma Turma --</option>';
-            turmas.forEach(turma => {
+            turmasUnicas.forEach(turma => {
                 selectTurmas.innerHTML += `<option value="${turma}">${turma}</option>`;
             });
             selectTurmas.disabled = false;
@@ -497,6 +488,12 @@
             turmaAtualSelecionada = nomeTurma;
             document.getElementById("titulo-turma").innerText = `Carômetro · ${nomeTurma}`;
 
+            // Atualiza dinamicamente a URL do botão Diário de Bordo
+            const btnDiario = document.getElementById("btn-diario-bordo");
+            if (btnDiario) {
+                btnDiario.href = `diariodebordo.html?turma=${encodeURIComponent(nomeTurma)}`;
+            }
+
             document.getElementById("tela-selecao").classList.add("hidden");
             document.getElementById("tela-carometro").classList.remove("hidden");
 
@@ -506,7 +503,7 @@
         function voltarParaSelecao() {
             document.getElementById("tela-carometro").classList.add("hidden");
             document.getElementById("tela-selecao").classList.remove("hidden");
-            carregarTurmas();
+            carregarEtapas();
         }
 
         /* ================= CARREGAR ALUNOS ================= */
@@ -544,7 +541,7 @@
                     return;
                 }
 
-                // Estilo do degradê para alunos neurodivergentes (Vermelho, Amarelo, Azul Escuro, Azul Claro)
+                // Estilo do degradê para alunos neurodivergentes
                 const estiloDegrade = "background: linear-gradient(135deg, #e52421 0%, #ffd100 33%, #0072ce 66%, #00a3e0 100%);";
 
                 alunos.forEach(aluno => {
@@ -751,22 +748,26 @@
         }
 
         /* ================= MODAL DE EDIÇÃO ================= */
-        function abrirModalEdicao(id, nome, turma, neurodivergente) {
+        async function abrirModalEdicao(id, nome, turma, neurodivergente) {
             document.getElementById("edit-aluno-id").value = id;
             document.getElementById("edit-nome").value = nome;
 
-            // Preenche o menu suspenso apenas com as turmas da mesma etapa do aluno
             const selectTurma = document.getElementById("edit-turma");
+            selectTurma.innerHTML = '<option value="">Carregando...</option>';
+
+            // Identifica o padrão da turma do aluno (ex: "3 EM")
+            const partes = turma.split(" ");
+            const prefixo = partes.slice(0, 2).join(" "); 
+            const pattern = `%${prefixo}%`;
+
+            const { data } = await supabaseClient
+                .from('carometro')
+                .select('class_name')
+                .ilike('class_name', pattern);
+
+            const turmasDaEtapa = data ? [...new Set(data.map(i => i.class_name))].sort() : [turma];
+
             selectTurma.innerHTML = "";
-
-            const etapaDoAluno = identificarEtapa(turma);
-            const turmasDaEtapa = turmasPorEtapa[etapaDoAluno] ? [...turmasPorEtapa[etapaDoAluno]] : [turma];
-
-            if (!turmasDaEtapa.includes(turma)) {
-                turmasDaEtapa.push(turma);
-                turmasDaEtapa.sort();
-            }
-
             turmasDaEtapa.forEach(t => {
                 const option = document.createElement("option");
                 option.value = t;
