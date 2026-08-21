@@ -60,25 +60,10 @@
                         <i class="fa-solid fa-plus text-xs"></i>
                         <span>Nova Ocorrência</span>
                     </button>
-                    <!-- Botão Voltar -->
-                    <button onclick="voltarParaCarometro()" class="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2">
-                        <i class="fa-solid fa-arrow-left"></i> Voltar
+                    <button onclick="voltarParaCarometro()" class="bg-white/10 hover:bg-white/15 px-3.5 py-2.5 rounded-xl font-semibold text-xs flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        <span>Voltar ao Carômetro</span>
                     </button>
-                    
-                    <script>
-                    function voltarParaCarometro() {
-                        const params = new URLSearchParams(window.location.search);
-                        const turma = params.get('turma');
-                        
-                        if (turma) {
-                            // Redireciona de volta para o Carômetro enviando a mesma turma na URL
-                            window.location.href = `index.html?turma=${encodeURIComponent(turma)}`;
-                        } else {
-                            // Caso não tenha o parâmetro, apenas volta no histórico do navegador
-                            window.history.back();
-                        }
-                    }
-                    </script>
                 </div>
             </div>
         </header>
@@ -173,7 +158,10 @@
                     <textarea id="ocorr-descricao" rows="3" placeholder="Informações complementares sobre o fato..." class="w-full p-3 border border-slate-200 rounded-xl font-medium text-sm outline-none focus:border-amber-500"></textarea>
                 </div>
 
-                
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Anexo / Comprovante (Opcional)</label>
+                    <input type="file" id="ocorr-foto" accept="image/*" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100">
+                </div>
             </div>
 
             <div class="flex justify-end gap-2.5 mt-6">
@@ -219,28 +207,22 @@
 
         let turmaAtualSelecionada = "";
 
-        document.addEventListener("DOMContentLoaded", async () => {
-                verificarSessao();
-                configurarInputsDeArquivo();
-            
-                // CHECA SE VOLTOU COM O PARÂMETRO DA TURMA NA URL
-                const params = new URLSearchParams(window.location.search);
-                const turmaUrl = params.get('turma');
-            
-                if (turmaUrl && localStorage.getItem(CHAVE_EXPIRACAO)) {
-                    turmaAtualSelecionada = turmaUrl;
-                    document.getElementById("titulo-turma").innerText = `Carômetro · ${turmaUrl}`;
-            
-                    const btnDiario = document.getElementById("btn-diario-bordo");
-                    if (btnDiario) {
-                        btnDiario.href = `diariodebordo.html?turma=${encodeURIComponent(turmaUrl)}`;
-                    }
-            
-                    document.getElementById("tela-selecao").classList.add("hidden");
-                    document.getElementById("tela-carometro").classList.remove("hidden");
-                    carregarAlunos(turmaUrl);
-                }
-            });
+        document.addEventListener("DOMContentLoaded", () => {
+            popularTiposOcorrencia();
+
+            // Captura o parâmetro "turma" enviado via URL ex: diariodebordo.html?turma=1%20EM%20A
+            const params = new URLSearchParams(window.location.search);
+            const turmaParam = params.get('turma');
+
+            if (turmaParam) {
+                turmaAtualSelecionada = turmaParam;
+                document.getElementById("titulo-turma").innerText = `Diário de Bordo · ${turmaParam}`;
+                carregarOcorrencias(turmaParam);
+            } else {
+                alert("Nenhuma turma especificada! Redirecionando...");
+                voltarParaCarometro();
+            }
+        });
 
         function popularTiposOcorrencia() {
             const selectTipo = document.getElementById("ocorr-tipo");
@@ -411,10 +393,6 @@
 
             document.getElementById("ocorr-descricao").value = "";
             document.getElementById("ocorr-autor").value = "";
-                        const campo = document.getElementById("id-do-campo");
-            if (campo) {
-                campo.value = valorDesejado;
-            }
             document.getElementById("ocorr-foto").value = "";
 
             esconderLoading();
