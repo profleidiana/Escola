@@ -442,7 +442,10 @@
             selectTurmas.innerHTML = '<option value="">-- Selecione primeiro a Etapa --</option>';
             selectTurmas.disabled = true;
 
-            const { data, error } = await supabaseClient.from('carometro').select('class_name');
+            const { data, error } = await supabaseClient
+                .from('carometro')
+                .select('class_name')
+                .limit(5000);
             if (error) return alert("Erro ao carregar turmas: " + error.message);
 
             todasAsTurmas = [...new Set(data.map(item => item.class_name))].filter(Boolean).sort();
