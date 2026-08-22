@@ -244,14 +244,39 @@
             });
         }
 
-        function popularProfessores() {
+        // Substitua a sua função popularProfessores atual por esta:
+        function popularProfessores(filtro = "") {
             const datalist = document.getElementById("lista-professores");
             if (!datalist) return;
+            
             datalist.innerHTML = "";
-            LISTA_PROFESSORES.sort().forEach(prof => {
+            
+            // Filtra pelos nomes que contêm o texto digitado e pega apenas os 5 primeiros
+            const professoresFiltrados = LISTA_PROFESSORES
+                .filter(prof => prof.toLowerCase().includes(filtro.toLowerCase()))
+                .sort()
+                .slice(0, 5);
+        
+            professoresFiltrados.forEach(prof => {
                 datalist.innerHTML += `<option value="${prof}">${prof}</option>`;
             });
         }
+        
+        // Adicione este ouvinte dentro do seu eventListener DOMContentLoaded:
+        document.addEventListener("DOMContentLoaded", () => {
+            popularTiposOcorrencia();
+            popularProfessores(); // Carrega os 5 primeiros inicialmente
+        
+            // Atualiza dinamicamente limitando a 5 conforme o usuário digita
+            const inputAutor = document.getElementById("ocorr-autor");
+            if (inputAutor) {
+                inputAutor.addEventListener("input", (e) => {
+                    popularProfessores(e.target.value);
+                });
+            }
+        
+            // ... resto do seu código DOMContentLoaded ...
+        });
 
         function mostrarLoading(msg) {
             document.getElementById("loading-text").innerText = msg || "Carregando...";
