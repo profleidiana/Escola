@@ -149,7 +149,8 @@
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Registrado por *</label>
-                        <input type="text" id="ocorr-autor" placeholder="Seu nome completo" required class="w-full p-3 border border-slate-200 rounded-xl font-medium text-sm outline-none focus:border-amber-500">
+                        <input type="text" id="ocorr-autor" list="lista-professores" autocomplete="off" placeholder="Seu nome completo" required class="w-full p-3 border border-slate-200 rounded-xl font-medium text-sm outline-none focus:border-amber-500">
+                        <datalist id="lista-professores"></datalist>
                     </div>
                 </div>
 
@@ -192,7 +193,7 @@
             "Jogou lixo no chão.",
             "Não entregou a atividade no prazo.",
             "Não entregou o trabalho solicitado.",
-            "Não realizou a atividade proposta.",
+            "Não realizou a atividade proposta em sala.",
             "Não realizou a avaliação.",
             "Não trouxe o material necessário.",
             "Recusa em guardar o celular após solicitação.",
@@ -205,10 +206,21 @@
             "Uso de linguagem inadequada ou ofensiva."
         ];
 
+        // ARRAY DE PROFESSORES PARA AUTOCOMPLETE (ALTERE / ADICIONE CONFORME NECESSÁRIO)
+        const LISTA_PROFESSORES = [
+            "Ana Maria Souza",
+            "Carlos Eduardo Lima",
+            "Leidiana Vieira da Silva",
+            "João Pedro Santos",
+            "Maria Clara Rocha",
+            "Roberto Silva"
+        ];
+
         let turmaAtualSelecionada = "";
 
         document.addEventListener("DOMContentLoaded", () => {
             popularTiposOcorrencia();
+            popularProfessores();
 
             // Captura o parâmetro "turma" enviado via URL ex: diariodebordo.html?turma=1%20EM%20A
             const params = new URLSearchParams(window.location.search);
@@ -229,6 +241,15 @@
             selectTipo.innerHTML = "";
             LISTA_OCORRENCIAS.forEach(item => {
                 selectTipo.innerHTML += `<option value="${item}">${item}</option>`;
+            });
+        }
+
+        function popularProfessores() {
+            const datalist = document.getElementById("lista-professores");
+            if (!datalist) return;
+            datalist.innerHTML = "";
+            LISTA_PROFESSORES.sort().forEach(prof => {
+                datalist.innerHTML += `<option value="${prof}">${prof}</option>`;
             });
         }
 
